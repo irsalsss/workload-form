@@ -1,9 +1,26 @@
+import { useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { EmployeeWorkloadProfile } from '../types/workload';
 import Select from './Select';
 import { getStatus } from '../consts/status';
 import { roles } from '../consts/roles';
 import VerticalLine from './VerticalLine';
+
+const displayFTEValue = (
+  fteValue: number,
+  inputValue: number,
+  isChecked: boolean,
+) => {
+  if (fteValue !== inputValue) {
+    return inputValue;
+  }
+
+  if (isChecked) {
+    return 0;
+  }
+
+  return fteValue;
+};
 
 interface WorkloadFormProps {
   selectedWorkload: EmployeeWorkloadProfile;
@@ -13,12 +30,23 @@ interface WorkloadFormProps {
     key: 'actingAsRole' | 'notes',
     value: string,
   ) => void;
+  onChangeInputValue: (
+    workLoadId: string,
+    projectId: string,
+    month: string,
+    value: string,
+    previousValue: number,
+    error: string,
+  ) => void;
 }
 
 export default function WorkloadForm({
   selectedWorkload,
   onChangeRoleAndNote,
+  onChangeInputValue,
 }: WorkloadFormProps) {
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleChangeRole =
     (workLoadId: string, projectId: string) =>
     (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -36,6 +64,47 @@ export default function WorkloadForm({
       onChangeRoleAndNote(workLoadId, projectId, 'notes', event.target.value);
     };
 
+  const handleChangeInputValue =
+    (
+      workLoadId: string,
+      projectId: string,
+      month: string,
+      previousValue: number,
+    ) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      if (value === '') {
+        return;
+      }
+
+      const input = event.target;
+      const nums = Number(value);
+      const isError = isNaN(nums) || nums < 0 || nums > 5;
+      let error = '';
+
+      if (isError) {
+        if (isNaN(nums)) {
+          error = 'Please enter a valid number.';
+        } else if (nums < 0 || nums > 4) {
+          error = 'Stuffing must be between number between 0 and 5.';
+        }
+
+        if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = setTimeout(() => {
+          input.value = String(previousValue);
+        }, 500);
+      }
+
+      onChangeInputValue(
+        workLoadId,
+        projectId,
+        month,
+        value,
+        previousValue,
+        error,
+      );
+    };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full">
       <h1 className="text-2xl font-bold">{selectedWorkload.employeeName}</h1>
@@ -51,12 +120,22 @@ export default function WorkloadForm({
                 <p className="text-center text-gray-500">{allocation.month}</p>
                 <p
                   className={twMerge(
-                    getStatus(allocation.fteValue),
+                    getStatus(
+                      displayFTEValue(
+                        allocation.fteValue,
+                        allocation.inputValue,
+                        allocation.isChecked,
+                      ),
+                    ),
                     'rounded-md px-8 py-2',
                     'flex items-center justify-center',
                   )}
                 >
-                  {allocation.fteValue}
+                  {displayFTEValue(
+                    allocation.fteValue,
+                    allocation.inputValue,
+                    allocation.isChecked,
+                  )}
                 </p>
               </div>
             ))}
@@ -81,7 +160,15 @@ export default function WorkloadForm({
                     <input
                       className="w-6"
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       defaultValue={allocation.inputValue}
+                      onChange={handleChangeInputValue(
+                        selectedWorkload.id,
+                        project.id,
+                        allocation.month,
+                        allocation.fteValue,
+                      )}
                     />
                     <input
                       className="w-6"
