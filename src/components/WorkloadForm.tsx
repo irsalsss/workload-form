@@ -1,25 +1,27 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { EmployeeWorkloadProfile } from '../types/workload';
 import Select from './Select';
 import { getStatus } from '../consts/status';
 import { roles } from '../consts/roles';
-import VerticalLine from './VerticalLine';
+import Separator from './Separator';
+
+const INPUT_RESET_DELAY_MS = 500;
 
 const displayFTEValue = (
-  fteValue: number,
-  inputValue: number,
+  previousValue: number,
+  currentValue: number,
   isChecked: boolean,
 ) => {
   if (isChecked) {
     return 0;
   }
 
-  if (fteValue !== inputValue) {
-    return inputValue;
+  if (previousValue !== currentValue) {
+    return currentValue;
   }
 
-  return fteValue;
+  return previousValue;
 };
 
 interface WorkloadFormProps {
@@ -52,7 +54,21 @@ export default function WorkloadForm({
   onChangeInputValue,
   onChangeCheckbox,
 }: WorkloadFormProps) {
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
+
+  const [localValues, setLocalValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const project of selectedWorkload.projects) {
+      for (const allocation of project.allocations) {
+        initial[`${project.id}:${allocation.month}`] = String(
+          allocation.inputValue,
+        );
+      }
+    }
+    return initial;
+  });
 
   const handleChangeRole =
     (workLoadId: string, projectId: string) =>
@@ -80,26 +96,34 @@ export default function WorkloadForm({
     ) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
-      if (value === '') {
-        return;
-      }
+      const localKey = `${projectId}:${month}`;
 
-      const input = event.target;
+      setLocalValues((prev) => ({ ...prev, [localKey]: value }));
+
+      if (value === '') return;
+
       const nums = Number(value);
       const isError = isNaN(nums) || nums < 0 || nums > 5;
       let error = '';
 
       if (isError) {
-        if (isNaN(nums)) {
-          error = 'Please enter a valid number.';
-        } else if (nums < 0 || nums > 4) {
-          error = 'Stuffing must be between number between 0 and 5.';
-        }
+        error = isNaN(nums)
+          ? 'Please enter a valid number.'
+          : 'Value must be a number between 0 and 5.';
 
-        if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-        resetTimerRef.current = setTimeout(() => {
-          input.value = String(previousValue);
-        }, 500);
+        const timerKey = `${workLoadId}:${projectId}:${month}`;
+        const existing = resetTimersRef.current.get(timerKey);
+
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(() => {
+          resetTimersRef.current.delete(timerKey);
+          setLocalValues((prev) => ({
+            ...prev,
+            [localKey]: String(previousValue),
+          }));
+        }, INPUT_RESET_DELAY_MS);
+
+        resetTimersRef.current.set(timerKey, timer);
       }
 
       onChangeInputValue(
@@ -118,48 +142,54 @@ export default function WorkloadForm({
       onChangeCheckbox(workLoadId, projectId, month, event.target.checked);
     };
 
+  const handleOnBlurInputValue =
+    (projectId: string, month: string, previousValue: number) =>
+    (event: React.FocusEvent<HTMLInputElement>) => {
+      if (event.target.value === '') {
+        setLocalValues((prev) => ({
+          ...prev,
+          [`${projectId}:${month}`]: String(previousValue),
+        }));
+      }
+    };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full">
       <h1 className="text-2xl font-bold">{selectedWorkload.employeeName}</h1>
       <p>Workload</p>
-      <p>ID: {selectedWorkload.id}</p>
-      <p>Employee id: {selectedWorkload.employeeId}</p>
 
       {selectedWorkload.projects.map((project) => (
         <div key={project.id} className="mt-8">
           <div className="flex gap-2 mt-8">
             <div className="w-[120px]" />
             <div className="grid grid-cols-12 gap-2 w-full">
-              {project.allocations.map((allocation) => (
-                <div className="flex flex-col gap-2" key={allocation.month}>
-                  <p className="text-center text-gray-500">
-                    {allocation.month}
-                  </p>
-                  <p
-                    className={twMerge(
-                      getStatus(
-                        displayFTEValue(
-                          allocation.fteValue,
-                          allocation.inputValue,
-                          allocation.isChecked,
-                        ),
-                      ),
-                      'rounded-md px-8 py-2',
-                      'flex items-center justify-center',
-                    )}
-                  >
-                    {displayFTEValue(
-                      allocation.fteValue,
-                      allocation.inputValue,
-                      allocation.isChecked,
-                    )}
-                  </p>
-                </div>
-              ))}
+              {project.allocations.map((allocation) => {
+                const fte = displayFTEValue(
+                  allocation.fteValue,
+                  allocation.inputValue,
+                  allocation.isChecked,
+                );
+                return (
+                  <div className="flex flex-col gap-2" key={allocation.month}>
+                    <p className="text-center text-gray-500">
+                      {allocation.month}
+                    </p>
+                    <p
+                      className={twMerge(
+                        getStatus(fte),
+                        'rounded-md px-2 py-2',
+                        'flex items-center justify-center',
+                      )}
+                    >
+                      {fte}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <VerticalLine />
+          <Separator />
 
           <div className="flex flex-col">
             <div className="flex gap-2 items-center">
@@ -203,11 +233,17 @@ export default function WorkloadForm({
                         <input
                           className="w-6 text-center"
                           type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          defaultValue={allocation.inputValue}
+                          value={
+                            localValues[`${project.id}:${allocation.month}`] ??
+                            String(allocation.inputValue)
+                          }
                           onChange={handleChangeInputValue(
                             selectedWorkload.id,
+                            project.id,
+                            allocation.month,
+                            allocation.fteValue,
+                          )}
+                          onBlur={handleOnBlurInputValue(
                             project.id,
                             allocation.month,
                             allocation.fteValue,
@@ -216,7 +252,7 @@ export default function WorkloadForm({
                         <input
                           className="w-6"
                           type="checkbox"
-                          defaultChecked={allocation.isChecked}
+                          checked={allocation.isChecked}
                           onChange={handleChangeCheckbox(
                             selectedWorkload.id,
                             project.id,
@@ -251,7 +287,7 @@ export default function WorkloadForm({
             </div>
           </div>
 
-          <VerticalLine />
+          <Separator />
         </div>
       ))}
     </div>

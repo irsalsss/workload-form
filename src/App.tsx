@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { data } from './consts/workload';
 import { EmployeeWorkloadProfile } from './types/workload';
 import WorkloadForm from './components/WorkloadForm';
@@ -6,11 +6,12 @@ import Select from './components/Select';
 import { useNotification } from './hooks/useNotification';
 
 export default function App() {
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { showError, notification } = useNotification();
   const [employeeWorkloadProfiles, setEmployeeWorkloadProfiles] =
     useState<EmployeeWorkloadProfile[]>(data);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedYear, setSelectedYear] = useState(
+    () => [...new Set(data.map((d) => d.year))][0] ?? null,
+  );
 
   const years = useMemo(
     () => [...new Set(employeeWorkloadProfiles.map((item) => item.year))],
@@ -24,12 +25,6 @@ export default function App() {
       (item) => item.year === selectedYear,
     );
   }, [employeeWorkloadProfiles, selectedYear]);
-
-  useEffect(() => {
-    if (years.length > 0) {
-      setSelectedYear(years[0]);
-    }
-  }, [years]);
 
   const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedYear(Number(event.target.value));
@@ -57,55 +52,49 @@ export default function App() {
     );
   };
 
-  const handleChangeInputValue = useCallback(
-    (
-      workLoadId: string,
-      projectId: string,
-      month: string,
-      value: string,
-      previousValue: number,
-      error: string,
-    ) => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => {
-        if (!!error) {
-          showError(error);
+  const handleChangeInputValue = (
+    workLoadId: string,
+    projectId: string,
+    month: string,
+    value: string,
+    previousValue: number,
+    error: string,
+  ) => {
+    if (error) {
+      showError(error);
+    }
+
+    setEmployeeWorkloadProfiles((prev) =>
+      prev.map((item) => {
+        if (item.id !== workLoadId) {
+          return item;
         }
 
-        setEmployeeWorkloadProfiles((prev) =>
-          prev.map((item) => {
-            if (item.id !== workLoadId) {
-              return item;
+        return {
+          ...item,
+          projects: item.projects.map((project) => {
+            if (project.id !== projectId) {
+              return project;
             }
 
             return {
-              ...item,
-              projects: item.projects.map((project) => {
-                if (project.id !== projectId) {
-                  return project;
+              ...project,
+              allocations: project.allocations.map((allocation) => {
+                if (allocation.month !== month) {
+                  return allocation;
                 }
 
                 return {
-                  ...project,
-                  allocations: project.allocations.map((allocation) => {
-                    if (allocation.month !== month) {
-                      return allocation;
-                    }
-
-                    return {
-                      ...allocation,
-                      inputValue: !!error ? previousValue : Number(value),
-                    };
-                  }),
+                  ...allocation,
+                  inputValue: error ? previousValue : Number(value),
                 };
               }),
             };
           }),
-        );
-      }, 500);
-    },
-    [],
-  );
+        };
+      }),
+    );
+  };
 
   const handleChangeCheckbox = (
     workLoadId: string,

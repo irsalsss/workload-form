@@ -26,9 +26,13 @@ export default function Select({
       defaultValue={defaultValue}
       onChange={onChange}
     >
-      {!!placeholder && <option value="">{placeholder}</option>}
-      {options.map((option) => (
-        <option key={option} value={option}>
+      {!!placeholder && (
+        <option disabled hidden value="">
+          {placeholder}
+        </option>
+      )}
+      {options.map((option, index) => (
+        <option key={`${option}-${index}`} value={option}>
           {option}
         </option>
       ))}
