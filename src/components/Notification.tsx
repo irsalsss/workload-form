@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const NOTIFICATION_DURATION_MS = 2000;
+const NOTIFICATION_DURATION_MS = 3000;
 
 interface NotificationProps {
   errorMessage: string;
@@ -23,7 +23,7 @@ export default function Notification({
   }, [errorMessage, onDismiss]);
 
   return (
-    <div className="flex items-center gap-4 bg-white rounded-md p-4 shadow-md w-fit fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="flex items-center gap-4 bg-white rounded-md p-4 shadow-md w-max fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
       <button
         aria-label="Dismiss"
         className="bg-red-500 rounded-full text-white w-6 h-6 text-sm flex items-center justify-center cursor-pointer shrink-0"

@@ -126,7 +126,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col gap-4 p-8 relative">
+    <div className="min-h-screen bg-gray-50 flex flex-col gap-4 lg:p-8 p-4 relative">
       <div className="w-full flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Resource Allocation

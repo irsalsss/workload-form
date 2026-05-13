@@ -1,10 +1,9 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { EmployeeWorkloadProfile } from '../types/workload';
+import { EmployeeWorkloadProfile, ProjectWorkload } from '../types/workload';
 import Select from './Select';
 import { getStatus } from '../consts/status';
 import { roles } from '../consts/roles';
-import Separator from './Separator';
 
 const INPUT_RESET_DELAY_MS = 500;
 
@@ -23,6 +22,17 @@ const displayFTEValue = (
 
   return previousValue;
 };
+
+function ProjectDetails({ project }: { project: ProjectWorkload }) {
+  return (
+    <>
+      <p className="font-bold text-lg">{project.projectName}</p>
+      <p className="text-gray-500 text-md">| {project.region}</p>
+      <p className="text-gray-500 text-md">| {project.clientGroup}</p>
+      <p className="text-gray-500 text-md">| {project.brand}</p>
+    </>
+  );
+}
 
 interface WorkloadFormProps {
   selectedWorkload: EmployeeWorkloadProfile;
@@ -154,141 +164,150 @@ export default function WorkloadForm({
     };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 w-full">
+    <div className="bg-white rounded-2xl shadow-lg lg:p-8 p-4 w-full">
       <h1 className="text-2xl font-bold">{selectedWorkload.employeeName}</h1>
       <p>Workload</p>
 
       {selectedWorkload.projects.map((project) => (
-        <div key={project.id} className="mt-8">
-          <div className="flex gap-2 mt-8">
-            <div className="w-[120px]" />
-            <div className="grid grid-cols-12 gap-2 w-full">
-              {project.allocations.map((allocation) => {
-                const fte = displayFTEValue(
-                  allocation.fteValue,
-                  allocation.inputValue,
-                  allocation.isChecked,
-                );
-                return (
-                  <div className="flex flex-col gap-2" key={allocation.month}>
-                    <p className="text-center text-gray-500">
-                      {allocation.month}
-                    </p>
-                    <p
-                      className={twMerge(
-                        getStatus(fte),
-                        'rounded-md px-2 py-2',
-                        'flex items-center justify-center',
-                      )}
-                    >
-                      {fte}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+        <React.Fragment key={project.id}>
+          <div className="flex lg:flex-nowrap flex-wrap mt-4 gap-2 items-center lg:hidden block">
+            <ProjectDetails project={project} />
           </div>
 
-          <Separator />
-
-          <div className="flex flex-col">
-            <div className="flex gap-2 items-center">
-              <p className="font-bold text-lg">{project.projectName}</p>
-              <p className="text-gray-500 text-md">| {project.region}</p>
-              <p className="text-gray-500 text-md">| {project.clientGroup}</p>
-              <p className="text-gray-500 text-md">| {project.brand}</p>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <div className="flex flex-col gap-2 w-[120px]">
-                <p className="text-md text-gray-400 text-right">Total</p>
-                <div className="h-full flex gap-2">
-                  <span className="w-1 h-8 bg-blue-800 rounded-full" />
-                  <div className="flex flex-col gap-2">
-                    <p className="text-md">{project.departmentCode} |</p>
-                    <p className="text-md">{project.id}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 w-full">
-                <div className="grid grid-cols-12 gap-2 w-full">
-                  {project.allocations.map((allocation) => (
-                    <div key={allocation.month} className="flex flex-col gap-2">
-                      <p className="text-center font-bold">
-                        {displayFTEValue(
-                          allocation.fteValue,
-                          allocation.inputValue,
-                          allocation.isChecked,
-                        )}
+          <div className="mt-8 lg:block flex lg:gap-8 gap-4">
+            <div className="flex lg:flex-row flex-col gap-2 border-gray-200 lg:border-b-1 lg:border-r-0 border-r-1 lg:pr-0 pr-4 pb-8 lg:my-8">
+              <div className="lg:w-[120px] lg:h-unset h-[48px]" />
+              <div className="grid lg:grid-cols-12 grid-cols-1 gap-2 w-full">
+                {project.allocations.map((allocation) => {
+                  const fte = displayFTEValue(
+                    allocation.fteValue,
+                    allocation.inputValue,
+                    allocation.isChecked,
+                  );
+                  return (
+                    <div
+                      className="flex lg:flex-col lg:items-start items-center gap-2"
+                      key={allocation.month}
+                    >
+                      <p className="text-center text-gray-500 lg:w-unset w-[40px]">
+                        {allocation.month}
                       </p>
-
-                      <div
+                      <p
                         className={twMerge(
-                          'flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100',
-                          allocation.isChecked &&
-                            'bg-orange-100 text-orange-800',
+                          getStatus(fte),
+                          'rounded-md px-2 py-2 w-[72px]',
+                          'flex items-center justify-center',
                         )}
                       >
-                        <input
-                          className="w-6 text-center"
-                          type="text"
-                          value={
-                            localValues[`${project.id}:${allocation.month}`] ??
-                            String(allocation.inputValue)
-                          }
-                          onChange={handleChangeInputValue(
-                            selectedWorkload.id,
-                            project.id,
-                            allocation.month,
-                            allocation.fteValue,
-                          )}
-                          onBlur={handleOnBlurInputValue(
-                            project.id,
-                            allocation.month,
-                            allocation.fteValue,
-                          )}
-                        />
-                        <input
-                          className="w-6"
-                          type="checkbox"
-                          checked={allocation.isChecked}
-                          onChange={handleChangeCheckbox(
-                            selectedWorkload.id,
-                            project.id,
-                            allocation.month,
-                          )}
-                        />
-                      </div>
+                        {fte}
+                      </p>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col border-gray-200 lg:border-b-1 pb-8 lg:my-8">
+              <div className="lg:flex gap-2 items-center hidden">
+                <ProjectDetails project={project} />
+              </div>
+
+              <div className="flex gap-2 mt-4 lg:flex-row flex-col">
+                <div className="flex lg:flex-col lg:gap-2 gap-8 lg:w-[120px] w-unset lg:items-start items-center">
+                  <p className="text-md text-gray-400 text-right w-10">Total</p>
+                  <div className="h-full flex gap-2 lg:items-start items-center">
+                    <span className="w-1 h-8 bg-blue-800 rounded-full" />
+                    <div className="flex lg:flex-col gap-2">
+                      <p className="text-md">{project.departmentCode} |</p>
+                      <p className="text-md">{project.id}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex gap-2 items-start">
-                  <Select
-                    name="actingAsRole"
-                    id="actingAsRole"
-                    placeholder="Acting as"
-                    options={roles}
-                    defaultValue={project.actingAsRole}
-                    onChange={handleChangeRole(selectedWorkload.id, project.id)}
-                  />
+                <div className="flex flex-col gap-2 w-full lg:mb-0 mb-4">
+                  <div className="grid lg:grid-cols-12 grid-cols-1 gap-2 w-full">
+                    {project.allocations.map((allocation) => (
+                      <div
+                        key={allocation.month}
+                        className="flex lg:flex-col flex-row lg:gap-2 gap-10 lg:items-start items-center"
+                      >
+                        <p className="text-center font-bold lg:w-unset w-10">
+                          {displayFTEValue(
+                            allocation.fteValue,
+                            allocation.inputValue,
+                            allocation.isChecked,
+                          )}
+                        </p>
 
-                  <textarea
-                    name="notes"
-                    id="notes"
-                    placeholder="Comments"
-                    defaultValue={project.notes}
-                    className="w-full h-10 rounded-md p-2 border border-gray-200 resize-none focus:h-24 bg-gray-200 outline-none overflow-y-hidden"
-                    onBlur={handleChangeNote(selectedWorkload.id, project.id)}
-                  />
+                        <div
+                          className={twMerge(
+                            'flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100',
+                            allocation.isChecked &&
+                              'bg-orange-100 text-orange-800',
+                          )}
+                        >
+                          <input
+                            className="w-6 text-center"
+                            type="text"
+                            value={
+                              localValues[
+                                `${project.id}:${allocation.month}`
+                              ] ?? String(allocation.inputValue)
+                            }
+                            onChange={handleChangeInputValue(
+                              selectedWorkload.id,
+                              project.id,
+                              allocation.month,
+                              allocation.fteValue,
+                            )}
+                            onBlur={handleOnBlurInputValue(
+                              project.id,
+                              allocation.month,
+                              allocation.fteValue,
+                            )}
+                          />
+                          <input
+                            className="w-6"
+                            type="checkbox"
+                            checked={allocation.isChecked}
+                            onChange={handleChangeCheckbox(
+                              selectedWorkload.id,
+                              project.id,
+                              allocation.month,
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex lg:flex-row flex-col gap-2 items-start">
+                    <Select
+                      name="actingAsRole"
+                      id="actingAsRole"
+                      placeholder="Acting as"
+                      options={roles}
+                      defaultValue={project.actingAsRole}
+                      onChange={handleChangeRole(
+                        selectedWorkload.id,
+                        project.id,
+                      )}
+                    />
+
+                    <textarea
+                      name="notes"
+                      id="notes"
+                      placeholder="Comments"
+                      defaultValue={project.notes}
+                      className="w-full h-10 rounded-md p-2 border border-gray-200 resize-none focus:h-24 bg-gray-200 outline-none overflow-y-hidden"
+                      onBlur={handleChangeNote(selectedWorkload.id, project.id)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <Separator />
-        </div>
+        </React.Fragment>
       ))}
     </div>
   );
