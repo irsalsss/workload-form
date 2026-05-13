@@ -11,12 +11,12 @@ const displayFTEValue = (
   inputValue: number,
   isChecked: boolean,
 ) => {
-  if (fteValue !== inputValue) {
-    return inputValue;
-  }
-
   if (isChecked) {
     return 0;
+  }
+
+  if (fteValue !== inputValue) {
+    return inputValue;
   }
 
   return fteValue;
@@ -38,12 +38,19 @@ interface WorkloadFormProps {
     previousValue: number,
     error: string,
   ) => void;
+  onChangeCheckbox: (
+    workLoadId: string,
+    projectId: string,
+    month: string,
+    isChecked: boolean,
+  ) => void;
 }
 
 export default function WorkloadForm({
   selectedWorkload,
   onChangeRoleAndNote,
   onChangeInputValue,
+  onChangeCheckbox,
 }: WorkloadFormProps) {
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -105,6 +112,12 @@ export default function WorkloadForm({
       );
     };
 
+  const handleChangeCheckbox =
+    (workLoadId: string, projectId: string, month: string) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChangeCheckbox(workLoadId, projectId, month, event.target.checked);
+    };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full">
       <h1 className="text-2xl font-bold">{selectedWorkload.employeeName}</h1>
@@ -114,7 +127,7 @@ export default function WorkloadForm({
 
       {selectedWorkload.projects.map((project) => (
         <div key={project.id} className="mt-8">
-          <div className="mt-8 flex gap-2">
+          <div className="mt-8 grid grid-cols-12 gap-2">
             {project.allocations.map((allocation) => (
               <div className="flex flex-col gap-2" key={allocation.month}>
                 <p className="text-center text-gray-500">{allocation.month}</p>
@@ -151,14 +164,25 @@ export default function WorkloadForm({
               <p className="text-gray-500 text-md">| {project.brand}</p>
             </div>
 
-            <div className="flex gap-2 items-center mt-4">
+            <div className="grid grid-cols-12 gap-2 mt-4">
               {project.allocations.map((allocation) => (
                 <div key={allocation.month} className="flex flex-col gap-2">
-                  <p className="text-center font-bold">{allocation.fteValue}</p>
+                  <p className="text-center font-bold">
+                    {displayFTEValue(
+                      allocation.fteValue,
+                      allocation.inputValue,
+                      allocation.isChecked,
+                    )}
+                  </p>
 
-                  <div className="flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100">
+                  <div
+                    className={twMerge(
+                      'flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100',
+                      allocation.isChecked && 'bg-orange-100 text-orange-800',
+                    )}
+                  >
                     <input
-                      className="w-6"
+                      className="w-6 text-center"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -174,6 +198,11 @@ export default function WorkloadForm({
                       className="w-6"
                       type="checkbox"
                       defaultChecked={allocation.isChecked}
+                      onChange={handleChangeCheckbox(
+                        selectedWorkload.id,
+                        project.id,
+                        allocation.month,
+                      )}
                     />
                   </div>
                 </div>
@@ -196,7 +225,7 @@ export default function WorkloadForm({
               id="notes"
               placeholder="Comments"
               defaultValue={project.notes}
-              className="w-full h-10 rounded-md p-2 border border-gray-300 resize-none focus:h-24"
+              className="w-full h-10 rounded-md p-2 border border-gray-200 resize-none focus:h-24 bg-gray-200 outline-none overflow-y-hidden"
               onBlur={handleChangeNote(selectedWorkload.id, project.id)}
             />
           </div>

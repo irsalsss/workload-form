@@ -19,7 +19,7 @@ export default function Select({
 }: SelectProps) {
   return (
     <select
-      className="rounded-md h-10 p-2 border border-gray-300"
+      className="rounded-md h-10 p-2 border border-gray-200 border-r-8 bg-gray-200 text-gray-700 outline-none"
       name={name}
       id={id}
       value={value}

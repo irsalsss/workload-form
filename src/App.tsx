@@ -101,6 +101,35 @@ export default function App() {
     [],
   );
 
+  const handleChangeCheckbox = (
+    workLoadId: string,
+    projectId: string,
+    month: string,
+    isChecked: boolean,
+  ) => {
+    setEmployeeWorkloadProfiles((prev) =>
+      prev.map((item) =>
+        item.id === workLoadId
+          ? {
+              ...item,
+              projects: item.projects.map((project) =>
+                project.id === projectId
+                  ? {
+                      ...project,
+                      allocations: project.allocations.map((allocation) =>
+                        allocation.month === month
+                          ? { ...allocation, isChecked: isChecked }
+                          : allocation,
+                      ),
+                    }
+                  : project,
+              ),
+            }
+          : item,
+      ),
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col gap-4 p-8 relative">
       <div className="w-full flex items-center justify-between">
@@ -129,6 +158,7 @@ export default function App() {
             selectedWorkload={workload}
             onChangeRoleAndNote={handleChangeRoleAndNote}
             onChangeInputValue={handleChangeInputValue}
+            onChangeCheckbox={handleChangeCheckbox}
           />
         ))}
 
