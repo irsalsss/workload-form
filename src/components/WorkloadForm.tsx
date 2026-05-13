@@ -127,31 +127,36 @@ export default function WorkloadForm({
 
       {selectedWorkload.projects.map((project) => (
         <div key={project.id} className="mt-8">
-          <div className="mt-8 grid grid-cols-12 gap-2">
-            {project.allocations.map((allocation) => (
-              <div className="flex flex-col gap-2" key={allocation.month}>
-                <p className="text-center text-gray-500">{allocation.month}</p>
-                <p
-                  className={twMerge(
-                    getStatus(
-                      displayFTEValue(
-                        allocation.fteValue,
-                        allocation.inputValue,
-                        allocation.isChecked,
+          <div className="flex gap-2 mt-8">
+            <div className="w-[120px]" />
+            <div className="grid grid-cols-12 gap-2 w-full">
+              {project.allocations.map((allocation) => (
+                <div className="flex flex-col gap-2" key={allocation.month}>
+                  <p className="text-center text-gray-500">
+                    {allocation.month}
+                  </p>
+                  <p
+                    className={twMerge(
+                      getStatus(
+                        displayFTEValue(
+                          allocation.fteValue,
+                          allocation.inputValue,
+                          allocation.isChecked,
+                        ),
                       ),
-                    ),
-                    'rounded-md px-8 py-2',
-                    'flex items-center justify-center',
-                  )}
-                >
-                  {displayFTEValue(
-                    allocation.fteValue,
-                    allocation.inputValue,
-                    allocation.isChecked,
-                  )}
-                </p>
-              </div>
-            ))}
+                      'rounded-md px-8 py-2',
+                      'flex items-center justify-center',
+                    )}
+                  >
+                    {displayFTEValue(
+                      allocation.fteValue,
+                      allocation.inputValue,
+                      allocation.isChecked,
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <VerticalLine />
@@ -164,70 +169,86 @@ export default function WorkloadForm({
               <p className="text-gray-500 text-md">| {project.brand}</p>
             </div>
 
-            <div className="grid grid-cols-12 gap-2 mt-4">
-              {project.allocations.map((allocation) => (
-                <div key={allocation.month} className="flex flex-col gap-2">
-                  <p className="text-center font-bold">
-                    {displayFTEValue(
-                      allocation.fteValue,
-                      allocation.inputValue,
-                      allocation.isChecked,
-                    )}
-                  </p>
-
-                  <div
-                    className={twMerge(
-                      'flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100',
-                      allocation.isChecked && 'bg-orange-100 text-orange-800',
-                    )}
-                  >
-                    <input
-                      className="w-6 text-center"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      defaultValue={allocation.inputValue}
-                      onChange={handleChangeInputValue(
-                        selectedWorkload.id,
-                        project.id,
-                        allocation.month,
-                        allocation.fteValue,
-                      )}
-                    />
-                    <input
-                      className="w-6"
-                      type="checkbox"
-                      defaultChecked={allocation.isChecked}
-                      onChange={handleChangeCheckbox(
-                        selectedWorkload.id,
-                        project.id,
-                        allocation.month,
-                      )}
-                    />
+            <div className="flex gap-2 mt-4">
+              <div className="flex flex-col gap-2 w-[120px]">
+                <p className="text-md text-gray-400 text-right">Total</p>
+                <div className="h-full flex gap-2">
+                  <span className="w-1 h-8 bg-blue-800 rounded-full" />
+                  <div className="flex flex-col gap-2">
+                    <p className="text-md">{project.departmentCode} |</p>
+                    <p className="text-md">{project.id}</p>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex flex-col gap-2 w-full">
+                <div className="grid grid-cols-12 gap-2 w-full">
+                  {project.allocations.map((allocation) => (
+                    <div key={allocation.month} className="flex flex-col gap-2">
+                      <p className="text-center font-bold">
+                        {displayFTEValue(
+                          allocation.fteValue,
+                          allocation.inputValue,
+                          allocation.isChecked,
+                        )}
+                      </p>
+
+                      <div
+                        className={twMerge(
+                          'flex gap-2 items-center justify-center rounded-md px-2 py-2 bg-gray-100',
+                          allocation.isChecked &&
+                            'bg-orange-100 text-orange-800',
+                        )}
+                      >
+                        <input
+                          className="w-6 text-center"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          defaultValue={allocation.inputValue}
+                          onChange={handleChangeInputValue(
+                            selectedWorkload.id,
+                            project.id,
+                            allocation.month,
+                            allocation.fteValue,
+                          )}
+                        />
+                        <input
+                          className="w-6"
+                          type="checkbox"
+                          defaultChecked={allocation.isChecked}
+                          onChange={handleChangeCheckbox(
+                            selectedWorkload.id,
+                            project.id,
+                            allocation.month,
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 items-start">
+                  <Select
+                    name="actingAsRole"
+                    id="actingAsRole"
+                    placeholder="Acting as"
+                    options={roles}
+                    defaultValue={project.actingAsRole}
+                    onChange={handleChangeRole(selectedWorkload.id, project.id)}
+                  />
+
+                  <textarea
+                    name="notes"
+                    id="notes"
+                    placeholder="Comments"
+                    defaultValue={project.notes}
+                    className="w-full h-10 rounded-md p-2 border border-gray-200 resize-none focus:h-24 bg-gray-200 outline-none overflow-y-hidden"
+                    onBlur={handleChangeNote(selectedWorkload.id, project.id)}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="flex gap-2 items-start mt-4">
-            <Select
-              name="actingAsRole"
-              id="actingAsRole"
-              placeholder="Acting as"
-              options={roles}
-              defaultValue={project.actingAsRole}
-              onChange={handleChangeRole(selectedWorkload.id, project.id)}
-            />
-
-            <textarea
-              name="notes"
-              id="notes"
-              placeholder="Comments"
-              defaultValue={project.notes}
-              className="w-full h-10 rounded-md p-2 border border-gray-200 resize-none focus:h-24 bg-gray-200 outline-none overflow-y-hidden"
-              onBlur={handleChangeNote(selectedWorkload.id, project.id)}
-            />
           </div>
 
           <VerticalLine />

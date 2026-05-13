@@ -1,7 +1,7 @@
 interface SelectProps {
   name: string;
   id: string;
-  placeholder: string;
+  placeholder?: string;
   options: string[] | number[];
   value?: string | number;
   defaultValue?: string | number;
@@ -26,7 +26,7 @@ export default function Select({
       defaultValue={defaultValue}
       onChange={onChange}
     >
-      <option value="">{placeholder}</option>
+      {!!placeholder && <option value="">{placeholder}</option>}
       {options.map((option) => (
         <option key={option} value={option}>
           {option}

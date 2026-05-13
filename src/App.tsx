@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { data } from './consts/workload';
 import { EmployeeWorkloadProfile } from './types/workload';
 import WorkloadForm from './components/WorkloadForm';
@@ -24,6 +24,12 @@ export default function App() {
       (item) => item.year === selectedYear,
     );
   }, [employeeWorkloadProfiles, selectedYear]);
+
+  useEffect(() => {
+    if (years.length > 0) {
+      setSelectedYear(years[0]);
+    }
+  }, [years]);
 
   const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedYear(Number(event.target.value));
@@ -143,9 +149,8 @@ export default function App() {
           <Select
             name="years"
             id="years"
-            placeholder="Choose Year"
             options={years}
-            defaultValue={selectedYear ?? ''}
+            value={selectedYear ?? ''}
             onChange={handleYearChange}
           />
         </div>
