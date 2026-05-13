@@ -7,22 +7,44 @@ import Select from './components/Select';
 export default function App() {
   const [employeeWorkloadProfiles, setEmployeeWorkloadProfiles] =
     useState<EmployeeWorkloadProfile[]>(data);
-  const [selectedEmployeeWorkloadByYear, setSelectedEmployeeWorkloadByYear] =
-    useState<EmployeeWorkloadProfile[] | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   const years = useMemo(
     () => [...new Set(employeeWorkloadProfiles.map((item) => item.year))],
     [employeeWorkloadProfiles],
   );
 
-  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedEmployeeWorkloadProfiles = employeeWorkloadProfiles.filter(
-      (item) => item.year === Number(event.target.value),
-    );
+  const selectedEmployeeWorkloadByYear = useMemo(() => {
+    if (!selectedYear) return [];
 
-    if (selectedEmployeeWorkloadProfiles.length > 0) {
-      setSelectedEmployeeWorkloadByYear(selectedEmployeeWorkloadProfiles);
-    }
+    return employeeWorkloadProfiles.filter(
+      (item) => item.year === selectedYear,
+    );
+  }, [employeeWorkloadProfiles, selectedYear]);
+
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedYear(Number(event.target.value));
+  };
+
+  const handleChangeRole = (
+    workLoadId: string,
+    projectId: string,
+    value: string,
+  ) => {
+    setEmployeeWorkloadProfiles((prev) =>
+      prev.map((item) =>
+        item.id === workLoadId
+          ? {
+              ...item,
+              projects: item.projects.map((project) => {
+                return project.id === projectId
+                  ? { ...project, actingAsRole: value }
+                  : project;
+              }),
+            }
+          : item,
+      ),
+    );
   };
 
   return (
@@ -40,14 +62,19 @@ export default function App() {
             id="years"
             placeholder="Choose Year"
             options={years}
+            defaultValue={selectedYear ?? ''}
             onChange={handleYearChange}
           />
         </div>
       </div>
 
       {selectedEmployeeWorkloadByYear &&
-        selectedEmployeeWorkloadByYear.map((employee) => (
-          <WorkloadForm key={employee.employeeId} selectedWorkload={employee} />
+        selectedEmployeeWorkloadByYear.map((workload) => (
+          <WorkloadForm
+            key={workload.id}
+            selectedWorkload={workload}
+            onChangeRole={handleChangeRole}
+          />
         ))}
     </div>
   );

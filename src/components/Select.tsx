@@ -4,6 +4,7 @@ interface SelectProps {
   placeholder: string;
   options: string[] | number[];
   value?: string | number;
+  defaultValue?: string | number;
   onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -13,6 +14,7 @@ export default function Select({
   placeholder,
   options,
   value,
+  defaultValue,
   onChange,
 }: SelectProps) {
   return (
@@ -21,6 +23,7 @@ export default function Select({
       name={name}
       id={id}
       value={value}
+      defaultValue={defaultValue}
       onChange={onChange}
     >
       <option value="">{placeholder}</option>

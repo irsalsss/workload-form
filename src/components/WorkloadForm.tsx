@@ -7,9 +7,19 @@ import VerticalLine from './VerticalLine';
 
 interface WorkloadFormProps {
   selectedWorkload: EmployeeWorkloadProfile;
+  onChangeRole: (workLoadId: string, projectId: string, value: string) => void;
 }
 
-export default function WorkloadForm({ selectedWorkload }: WorkloadFormProps) {
+export default function WorkloadForm({
+  selectedWorkload,
+  onChangeRole,
+}: WorkloadFormProps) {
+  const handleChangeRole =
+    (workLoadId: string, projectId: string) =>
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      onChangeRole(workLoadId, projectId, event.target.value);
+    };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 w-full">
       <h1 className="text-2xl font-bold">{selectedWorkload.employeeName}</h1>
@@ -55,12 +65,12 @@ export default function WorkloadForm({ selectedWorkload }: WorkloadFormProps) {
                     <input
                       className="w-6"
                       type="text"
-                      value={allocation.inputValue}
+                      defaultValue={allocation.inputValue}
                     />
                     <input
                       className="w-6"
                       type="checkbox"
-                      checked={allocation.isChecked}
+                      defaultChecked={allocation.isChecked}
                     />
                   </div>
                 </div>
@@ -74,12 +84,15 @@ export default function WorkloadForm({ selectedWorkload }: WorkloadFormProps) {
               id="actingAsRole"
               placeholder="Acting as"
               options={roles}
+              defaultValue={project.actingAsRole}
+              onChange={handleChangeRole(selectedWorkload.id, project.id)}
             />
 
             <textarea
               name="notes"
               id="notes"
               placeholder="Comments"
+              defaultValue={project.notes}
               className="w-full h-10 rounded-md p-2 border border-gray-300 resize-none focus:h-24"
             />
           </div>
