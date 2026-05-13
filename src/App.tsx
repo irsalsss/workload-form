@@ -26,9 +26,10 @@ export default function App() {
     setSelectedYear(Number(event.target.value));
   };
 
-  const handleChangeRole = (
+  const handleChangeRoleAndNote = (
     workLoadId: string,
     projectId: string,
+    key: 'actingAsRole' | 'notes',
     value: string,
   ) => {
     setEmployeeWorkloadProfiles((prev) =>
@@ -38,7 +39,7 @@ export default function App() {
               ...item,
               projects: item.projects.map((project) => {
                 return project.id === projectId
-                  ? { ...project, actingAsRole: value }
+                  ? { ...project, [key]: value }
                   : project;
               }),
             }
@@ -73,7 +74,7 @@ export default function App() {
           <WorkloadForm
             key={workload.id}
             selectedWorkload={workload}
-            onChangeRole={handleChangeRole}
+            onChangeRoleAndNote={handleChangeRoleAndNote}
           />
         ))}
     </div>

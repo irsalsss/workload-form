@@ -7,17 +7,33 @@ import VerticalLine from './VerticalLine';
 
 interface WorkloadFormProps {
   selectedWorkload: EmployeeWorkloadProfile;
-  onChangeRole: (workLoadId: string, projectId: string, value: string) => void;
+  onChangeRoleAndNote: (
+    workLoadId: string,
+    projectId: string,
+    key: 'actingAsRole' | 'notes',
+    value: string,
+  ) => void;
 }
 
 export default function WorkloadForm({
   selectedWorkload,
-  onChangeRole,
+  onChangeRoleAndNote,
 }: WorkloadFormProps) {
   const handleChangeRole =
     (workLoadId: string, projectId: string) =>
     (event: React.ChangeEvent<HTMLSelectElement>) => {
-      onChangeRole(workLoadId, projectId, event.target.value);
+      onChangeRoleAndNote(
+        workLoadId,
+        projectId,
+        'actingAsRole',
+        event.target.value,
+      );
+    };
+
+  const handleChangeNote =
+    (workLoadId: string, projectId: string) =>
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChangeRoleAndNote(workLoadId, projectId, 'notes', event.target.value);
     };
 
   return (
@@ -94,6 +110,7 @@ export default function WorkloadForm({
               placeholder="Comments"
               defaultValue={project.notes}
               className="w-full h-10 rounded-md p-2 border border-gray-300 resize-none focus:h-24"
+              onBlur={handleChangeNote(selectedWorkload.id, project.id)}
             />
           </div>
 
