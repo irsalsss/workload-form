@@ -1,7 +1,54 @@
+import { useMemo, useState } from 'react';
+import { data } from './consts/workload';
+import { EmployeeWorkloadProfile } from './types/workload';
+import WorkloadForm from './components/WorkloadForm';
+import Select from './components/Select';
+
 export default function App() {
+  const [employeeWorkloadProfiles, setEmployeeWorkloadProfiles] =
+    useState<EmployeeWorkloadProfile[]>(data);
+  const [selectedEmployeeWorkloadByYear, setSelectedEmployeeWorkloadByYear] =
+    useState<EmployeeWorkloadProfile[] | null>(null);
+
+  const years = useMemo(
+    () => [...new Set(employeeWorkloadProfiles.map((item) => item.year))],
+    [employeeWorkloadProfiles],
+  );
+
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedEmployeeWorkloadProfiles = employeeWorkloadProfiles.filter(
+      (item) => item.year === Number(event.target.value),
+    );
+
+    if (selectedEmployeeWorkloadProfiles.length > 0) {
+      setSelectedEmployeeWorkloadByYear(selectedEmployeeWorkloadProfiles);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"></div>
+    <div className="min-h-screen bg-gray-50 flex flex-col gap-4 p-8">
+      <div className="w-full flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Resource Allocation
+        </h1>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="years">Year:</label>
+
+          <Select
+            name="years"
+            id="years"
+            placeholder="Choose Year"
+            options={years}
+            onChange={handleYearChange}
+          />
+        </div>
+      </div>
+
+      {selectedEmployeeWorkloadByYear &&
+        selectedEmployeeWorkloadByYear.map((employee) => (
+          <WorkloadForm key={employee.employeeId} selectedWorkload={employee} />
+        ))}
     </div>
   );
 }
